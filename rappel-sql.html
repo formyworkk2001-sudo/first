@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rappel SQL</title>
+<style>
+:root{--bg:#faf9f5;--card:#ffffff;--soft:#f1efe8;--text:#1f1e1d;--muted:#5f5e5a;--line:#d3d1c7;--accent-bg:#e6f1fb;--accent:#0c447c}
+@media (prefers-color-scheme:dark){:root{--bg:#1f1e1d;--card:#2a2927;--soft:#353432;--text:#f1efe8;--muted:#b4b2a9;--line:#4a4947;--accent-bg:#0c447c;--accent:#b5d4f4}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:20px;font-weight:500;margin:8px 0 14px}
+.wb{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 14px;min-height:140px}
+.blk{display:none;margin:0 0 18px}
+.root{display:inline-block;font-weight:500;font-size:16px;padding:4px 12px;border-radius:8px;background:var(--accent-bg);color:var(--accent)}
+.kids{margin:6px 0 0 14px;padding-left:12px;border-left:2px solid var(--line)}
+.it{display:none;margin:7px 0;font-size:15px;animation:pop .3s ease-out}
+.it b{font-weight:500}
+.it .sub{display:block;font-size:13px;color:var(--muted)}
+.it pre{margin:4px 0 0;padding:9px 11px;background:var(--soft);border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-x:auto}
+@keyframes pop{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.bar{display:flex;align-items:center;gap:8px;margin-top:14px;position:sticky;bottom:0;background:var(--bg);padding:8px 0}
+.cnt{flex:1;text-align:center;font-size:14px;color:var(--muted)}
+button{font:inherit;font-size:15px;padding:10px 16px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);cursor:pointer}
+button:active{transform:scale(.98)}
+#next{border-color:var(--accent);color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<h1>Rappel SQL</h1>
+<div class="wb" id="wb"></div>
+<div class="bar">
+<button id="prev" aria-label="Précédent">&larr;</button>
+<span class="cnt" id="cnt"></span>
+<button id="next">Suivant &rarr;</button>
+</div>
+</main>
+<script>
+var D=[
+{r:"LDD",i:[["CREATE"],["ALTER"],["DROP"]]},
+{r:"LMD",i:[["INSERT","INSERT INTO table(champs) VALUES(valeurs);"],["DELETE","DELETE FROM table WHERE condition;"],["UPDATE","UPDATE table SET champ = nouvelle_valeur WHERE condition;"],["SELECT","SELECT champs FROM tables WHERE ...;"]]},
+{r:"Vues",i:[["Sauvegarde des requêtes"],["Sécurisé"],["Limite : n'accepte pas le langage SPL","variables, IF, boucles..."],["Syntaxe","",["CREATE VIEW nom_vue AS \nSELECT champs \nFROM tables \nWHERE condition;\n \nSELECT * FROM nom_vue;"]]]},
+{r:"T-SQL `Transact-SQL`",i:[["Langage de programmation SPL"],["Fonctions"],["Procédure stockée"]]},
+{r:"Langage SPL “Stored Programming Language”",i:[["Conditions","IF, IF imbriqué, CASE"],["Boucles","WHILE, REPEAT, LOOP"]]},
+{r:"Variables",i:[["Déclarer","",["DECLARE a, b, c INT DEFAULT 0;"]],["@ = variable de session"],["Affecter","",["SET a = 10;\n-- ou : SELECT 10 INTO b;"]],["Afficher","",["SELECT a;"]]]},
+{r:"Conditions : IF",i:[["IF simple","",["IF (condition) THEN\n  traitement;\nELSE\n  traitement;\nEND IF;"]],["IF imbriqué","",["IF (condition1) THEN\n  trait;\nELSEIF (condition2) THEN\n  trait;\nELSE\n  trait;\nEND IF;"]]]},
+{r:"Conditions : CASE",i:[["CASE","",["CASE choix\n  WHEN valeur THEN select ...;\n  WHEN valeur THEN select ...;\n  ELSE select ...;\nEND CASE;"]]]},
+{r:"Boucle WHILE",i:[["Condition testée avant"],["Code","",["DECLARE i INT DEFAULT 0;\nWHILE (i <= 10) DO\n  SELECT(i);\n  SET i = i + 1;\nEND WHILE;"]]]},
+{r:"Boucle REPEAT",i:[["Condition testée à la fin (UNTIL)"],["Code","",["DECLARE i INT DEFAULT 0;\nREPEAT\n  SELECT(i);\n  SET i = i + 1;\nUNTIL (i > 10)\nEND REPEAT;"]]]},
+{r:"Boucle LOOP",i:[["Sortie avec LEAVE + étiquette"],["Code","",["DECLARE i INT DEFAULT 0;\nEtiq: LOOP\n  SELECT(i);\n  SET i = i + 1;\n  IF (i > 10) THEN\n    LEAVE Etiq;\n  END IF;\nEND LOOP;"]]]},
+{r:"Fonction",i:[["Retourne une valeur (RETURN)"],["S'utilise dans une requête"],["DETERMINISTIC","même entrée = toujours même résultat"],["NOT DETERMINISTIC","le résultat peut changer (ex : NOW(), RAND())"],["Les 4 caractéristiques d'accès aux données"],["CONTAINS SQL","contient des instructions SQL, sans lire ni écrire de données"],["NO SQL","ne contient aucune instruction SQL"],["READS SQL DATA","lit les données (SELECT), sans les modifier"],["MODIFIES SQL DATA","modifie les données (INSERT, UPDATE, DELETE)"],["Code","",["DELIMITER // \nCREATE FUNCTION sum(a INT, b INT)\nRETURNS INT\nREADS SQL DATA \nBEGIN\n  RETURN a + b;\nEND// \nDELIMITER ;\nSELECT sum(5);"]]]},
+{r:"Procédure stockée",i:[["Bloc de requêtes enregistré"],["S'appelle avec CALL"],["Code","",["DELIMITER //\nCREATE PROCEDURE affichage(IN id INT)\nBEGIN\n  SELECT c.nom AS Nom_Client,\np.nom_prod AS Nom_Produit, \ndc.quantite AS Quantite, \np.prix AS Prix_Unitaire \nFROM produits p\nJOIN detail_commande dc ON dc.produit_id = p.id \nJOIN commandes c ON c.id = dc.commande_id \nright  JOIN clients cl c ON cl.id = c.client_id;;\nEND// \nDELIMITER ;\nCALL affichage(2, 5);"]],["Peut contenir : Transaction, Exception"],["Les 3 modes de paramètres"],["IN","valeur envoyée à la procédure (par défaut)"],["OUT","valeur renvoyée par la procédure"],["INOUT","envoyée, modifiée, puis renvoyée"],["Code","",["CREATE PROCEDURE test(IN a INT, OUT b INT, INOUT c INT)\nBEGIN\n  SET b = a * 2;\n  SET c = c + 1;\nEND;\n\nSET @c = 5;\nCALL test(10, @b, @c);\nSELECT @b, @c;  -- 20 et 6"]],["Peut contenir : Transaction, Exception"]]},
+{r:"Transaction",i:[["Tout est fait ou rien n'est fait"],["Plusieurs opérations SQL = une seule unité"],["Soit toutes les requêtes réussissent, soit aucune modification n'est conservée"],["Code","",["START TRANSACTION;\n  requête 1;\n  requête 2;\nCOMMIT;   -- tout valider\n-- ou ROLLBACK; -- tout annuler"]]]},
+{r:"Exception",i:[["Contrôler les erreurs du système"],["CONTINUE / EXIT"],["Code","",["DECLARE CONTINUE HANDLER\nFOR SQLEXCEPTION\n  SET erreur = 1;\n\n-- EXIT : quitte le bloc\n-- CONTINUE : poursuit"]]]}
+];
+var wb=document.getElementById('wb'),items=[],blocks=[];
+D.forEach(function(b){
+var d=document.createElement('div');d.className='blk';
+var r=document.createElement('span');r.className='root';r.textContent=b.r;d.appendChild(r);
+var k=document.createElement('div');k.className='kids';
+b.i.forEach(function(x){
+var e=document.createElement('div');e.className='it';
+var t=document.createElement('b');t.textContent=x[0];e.appendChild(t);
+if(x[1]){var s=document.createElement('span');s.className='sub';s.textContent=x[1];e.appendChild(s);}
+if(x[2]){var p=document.createElement('pre');p.textContent=x[2][0];e.appendChild(p);}
+k.appendChild(e);items.push({el:e,blk:d});
+});
+d.appendChild(k);wb.appendChild(d);blocks.push(d);
+});
+var n=0,cnt=document.getElementById('cnt'),nx=document.getElementById('next'),pv=document.getElementById('prev');
+function render(){
+items.forEach(function(it,i){it.el.style.display=i<n?'block':'none';});
+blocks.forEach(function(b){b.style.display='none';});
+for(var i=0;i<n;i++){items[i].blk.style.display='block';}
+cnt.textContent=n===0?'Appuie sur Suivant':n+' / '+items.length;
+nx.textContent=n===items.length?'Recommencer':'Suivant \u2192';
+if(n>0){window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});}
+}
+nx.onclick=function(){if(n>=items.length){n=0;}else{n++;}render();};
+pv.onclick=function(){if(n>0){n--;render();}};
+render();
+</script>
+</body>
+</html>
